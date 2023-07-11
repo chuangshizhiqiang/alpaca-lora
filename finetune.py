@@ -260,12 +260,14 @@ def train(
     )
     model.config.use_cache = False
 
-    old_state_dict = model.state_dict
-    model.state_dict = (
-        lambda self, *_, **__: get_peft_model_state_dict(
-            self, old_state_dict()
-        )
-    ).__get__(model, type(model))
+    # peft add one line in function get_peft_model_state_dict: to_return = {k.replace(f".{adapter_name}", ""): v for k, v in to_return.items()}
+    # using below code will cause save zero weight, adapter_model.bin is empty, at least for peft 0.3.0 and 0.4.0
+    # old_state_dict = model.state_dict 
+    # model.state_dict = (
+    #     lambda self, *_, **__: get_peft_model_state_dict(
+    #         self, old_state_dict()
+    #     )
+    # ).__get__(model, type(model))
 
     if torch.__version__ >= "2" and sys.platform != "win32":
         model = torch.compile(model)
